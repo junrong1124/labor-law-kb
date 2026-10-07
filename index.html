@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勞動法規知識庫台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#185FA5;--primary-dark:#0C447C;--primary-light:#E6F1FB;--primary-mid:#378ADD;
+  --text:#2C2C2A;--text-muted:#5F5E5A;--text-hint:#888780;
+  --border:#D3D1C7;--border-blue:#B5D4F4;
+  --danger:#A32D2D;--danger-light:#FCEBEB;
+  --success:#3B6D11;--success-light:#EAF3DE;
+  --bg:#F1EFE8;--card:#FFFFFF;
+  --radius:12px;--radius-sm:8px;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;border-bottom:2px solid var(--primary)}
+.header h1{font-size:20px;font-weight:500;color:var(--primary-dark)}
+.sync-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);background:var(--primary-light);padding:6px 12px;border-radius:20px;border:1px solid var(--border-blue)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--success)}
+.sync-dot.syncing{background:var(--primary-mid);animation:pulse 1s infinite}
+.sync-dot.offline{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pending-section{background:var(--danger-light);border:1px solid var(--danger);border-radius:var(--radius);padding:12px 16px;margin:16px 0}
+.pending-section h2{font-size:15px;font-weight:500;color:var(--danger);margin-bottom:8px}
+.pending-item{background:#fff;border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.pending-item:last-child{margin-bottom:0}
+.pending-item .pi-content{flex:1;min-width:0}
+.pending-item .pi-title{font-weight:500;font-size:14px;color:var(--text)}
+.pending-item .pi-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.btn-approve{background:var(--success);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;min-height:36px;flex-shrink:0}
+.btn-approve:hover{opacity:.85}
+.pending-empty{font-size:13px;color:var(--text-muted);padding:8px 0}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+.tabs{display:flex;gap:4px;background:#fff;border-radius:var(--radius-sm);padding:4px;border:1px solid var(--border)}
+.tab{padding:8px 16px;font-size:13px;border:none;background:transparent;cursor:pointer;border-radius:6px;color:var(--text-muted);min-height:36px}
+.tab.active{background:var(--primary);color:#fff;font-weight:500}
+.search-box{flex:1;min-width:200px;position:relative}
+.search-box input{width:100%;padding:8px 12px 8px 34px;font-size:16px;border:1px solid var(--border);border-radius:var(--radius-sm);outline:none}
+.search-box input:focus{border-color:var(--primary)}
+.search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-hint)}
+.btn-new{background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:var(--radius-sm);font-size:14px;cursor:pointer;min-height:40px}
+.btn-new:hover{background:var(--primary-dark)}
+.form-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:none}
+.form-panel.show{display:block}
+.form-panel h2{font-size:16px;font-weight:500;color:var(--primary-dark);margin-bottom:12px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{display:flex;flex-direction:column;gap:4px}
+.form-field.full{grid-column:1/-1}
+.form-field label{font-size:13px;color:var(--text-muted)}
+.form-field input,.form-field select,.form-field textarea{padding:8px 10px;font-size:16px;border:1px solid var(--border);border-radius:6px;outline:none;font-family:inherit}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--primary)}
+.form-field textarea{min-height:80px;resize:vertical}
+.tag-group{display:flex;flex-wrap:wrap;gap:6px}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;user-select:none;min-height:36px}
+.tag-chip.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark)}
+.form-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.btn-submit{background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:var(--radius-sm);font-size:14px;cursor:pointer;min-height:44px}
+.btn-submit:hover{background:var(--primary-dark)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+.btn-cancel{background:transparent;color:var(--text-muted);border:1px solid var(--border);padding:10px 16px;border-radius:var(--radius-sm);font-size:14px;cursor:pointer;min-height:44px}
+.list{display:flex;flex-direction:column;gap:12px}
+.item-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.item-title{font-size:16px;font-weight:500;color:var(--text)}
+.item-type{font-size:11px;padding:2px 10px;border-radius:10px;font-weight:500;flex-shrink:0}
+.type-fagui{background:#EEEDFE;color:#3C3489}
+.type-panli{background:#FAECE7;color:#712B13}
+.type-biji{background:#E1F5EE;color:#085041}
+.item-tags{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.item-tag{font-size:11px;background:var(--primary-light);color:var(--primary-dark);padding:2px 8px;border-radius:8px}
+.item-content{font-size:14px;color:var(--text);margin:6px 0;white-space:pre-wrap;word-break:break-word}
+.item-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-muted);margin-top:8px}
+.item-meta a{color:var(--primary);text-decoration:none}
+.item-meta a:hover{text-decoration:underline}
+.item-actions{display:flex;gap:6px;margin-top:8px}
+.btn-action{font-size:12px;border:1px solid var(--border);background:transparent;padding:4px 10px;border-radius:6px;cursor:pointer;color:var(--text-muted);min-height:32px}
+.btn-action:hover{border-color:var(--primary);color:var(--primary)}
+.btn-action.danger:hover{border-color:var(--danger);color:var(--danger)}
+.btn-action.approve{border-color:var(--success);color:var(--success)}
+.list-empty{text-align:center;padding:40px;color:var(--text-hint);font-size:14px}
+.footer{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+.footer .left{display:flex;gap:8px;flex-wrap:wrap}
+.btn-footer{font-size:12px;border:1px solid var(--border);background:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--text-muted);min-height:36px}
+.btn-footer:hover{border-color:var(--primary);color:var(--primary)}
+.modal-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:24px;max-width:400px;width:90%}
+.modal h3{font-size:16px;margin-bottom:12px;color:var(--danger)}
+.modal p{font-size:14px;margin-bottom:16px;color:var(--text-muted)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:200;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+.config-banner{background:var(--danger-light);border:1px solid var(--danger);border-radius:var(--radius-sm);padding:12px 16px;margin:12px 0;font-size:13px;color:var(--danger)}
+.config-banner b{font-weight:500}
+@media(max-width:640px){
+  .form-grid{grid-template-columns:1fr}
+  .header h1{font-size:18px}
+  .item-title{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>勞動法規知識庫台</h1>
+    <div class="sync-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">載入中</span></div>
+  </div>
+
+  <div class="config-banner" id="configBanner">
+    <b>尚未設定 Supabase 連線。</b>請編輯本 HTML 檔案，將 <code>SUPABASE_URL</code>、<code>SUPABASE_ANON_KEY</code>、<code>SECRET_KEY</code> 三個變數替換為你的 Supabase 專案資訊，儲存後重新打開即可使用。詳見部署指引。
+  </div>
+
+  <div class="pending-section" id="pendingSection" style="display:none">
+    <h2>待審核區</h2>
+    <div id="pendingList"></div>
+  </div>
+
+  <div class="controls" id="controls" style="display:none">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="all">全部</button>
+      <button class="tab" data-tab="法規">法規</button>
+      <button class="tab" data-tab="判例">判例</button>
+      <button class="tab" data-tab="筆記">筆記</button>
+    </div>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="搜尋標題或內容…">
+    </div>
+    <button class="btn-new" id="btnNew">+ 新增</button>
+  </div>
+
+  <div class="form-panel" id="formPanel">
+    <h2 id="formTitle">新增條目</h2>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>類型</label>
+        <select id="fType"><option value="法規">法規</option><option value="判例">判例</option><option value="筆記">筆記</option></select>
+      </div>
+      <div class="form-field">
+        <label>日期</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="form-field full">
+        <label>標題</label>
+        <input type="text" id="fTitle" placeholder="法規名稱 / 案名 / 筆記標題">
+      </div>
+      <div class="form-field full">
+        <label>內容</label>
+        <textarea id="fContent" placeholder="條文 / 要旨 / 筆記內容"></textarea>
+      </div>
+      <div class="form-field full">
+        <label>標籤（多選）</label>
+        <div class="tag-group" id="tagGroup"></div>
+      </div>
+      <div class="form-field">
+        <label>來源連結文字</label>
+        <input type="text" id="fUrlText" placeholder="例如：全國法規資料庫">
+      </div>
+      <div class="form-field">
+        <label>來源 URL</label>
+        <input type="url" id="fUrlLink" placeholder="https://">
+      </div>
+      <div class="form-field full">
+        <label>備註</label>
+        <input type="text" id="fNote" placeholder="個人註記">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" id="btnCancel">取消</button>
+      <button class="btn-submit" id="btnSubmit">儲存</button>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="footer" id="footer" style="display:none">
+    <div class="left">
+      <button class="btn-footer" id="btnExport">導出 JSON 備份</button>
+      <button class="btn-footer" id="btnImport">匯入恢復</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+    <button class="btn-footer" id="btnClear">清空全部</button>
+  </div>
+</div>
+
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <h3 id="modalTitle">確認操作</h3>
+    <p id="modalMsg">確認要執行此操作嗎？</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modalCancel">取消</button>
+      <button class="btn-submit" id="modalConfirm" style="background:var(--danger)">確認</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     ★★★ 請替換以下三個變數為你的 Supabase 專案資訊 ★★★
+     取得方式見部署指引文件
+     ============================================================ */
+  var SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
+  var SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+  var SECRET_KEY = 'labKb2026Secret7x9';
+  /* ============================================================ */
+
+  var TABLE = 'knowledge_base';
+  var CONFIGURED = SUPABASE_URL.indexOf('YOUR_PROJECT_REF') === -1;
+
+  var state = {
+    allRows: [],
+    currentTab: 'all',
+    searchKeyword: '',
+    selectedTags: [],
+    editingId: null
+  };
+
+  var TAG_OPTIONS = ['勞基法','勞資爭議','性平法','職安法','資遣費','工時','調解','調查','薪酬','談判'];
+
+  function $(id){ return document.getElementById(id); }
+
+  function apiHeaders(){
+    return {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'x-secret-key': SECRET_KEY,
+      'Prefer': 'return=representation'
+    };
+  }
+
+  function setSync(status){
+    var dot = $('syncDot'), txt = $('syncText');
+    dot.className = 'sync-dot';
+    if(status==='syncing'){ dot.classList.add('syncing'); txt.textContent='同步中'; }
+    else if(status==='offline'){ dot.classList.add('offline'); txt.textContent='連線失敗'; }
+    else { txt.textContent='已同步'; }
+  }
+
+  function showToast(msg){
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2000);
+  }
+
+  function escapeHtml(s){
+    if(s==null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatDate(d){
+    if(!d) return '';
+    if(typeof d === 'string' && d.length >= 10) return d.substring(0,10);
+    var dt = new Date(d);
+    if(isNaN(dt)) return String(d);
+    var y = dt.getFullYear();
+    var m = String(dt.getMonth()+1).padStart(2,'0');
+    var dd = String(dt.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+dd;
+  }
+
+  function todayStr(){
+    var d = new Date();
+    var y = d.getFullYear();
+    var m = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+dd;
+  }
+
+  function typeClass(t){
+    if(t==='法規') return 'type-fagui';
+    if(t==='判例') return 'type-panli';
+    if(t==='筆記') return 'type-biji';
+    return '';
+  }
+
+  // 數據層：載入（Supabase REST GET）
+  function loadData(){
+    if(!CONFIGURED){ return; }
+    setSync('syncing');
+    var cols = 'id,title,content,type,tags,source_text,source_link,date,note,status,created_at';
+    var url = SUPABASE_URL + '/rest/v1/' + TABLE + '?select=' + cols + '&order=date.desc.nullslast&limit=500';
+    fetch(url, { headers: apiHeaders() })
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      })
+      .then(function(rows){
+        state.allRows = rows || [];
+        setSync('synced');
+        renderAll(state.allRows);
+      })
+      .catch(function(err){
+        console.error('[kb] load fail:', err);
+        setSync('offline');
+        renderAll([]);
+      });
+  }
+
+  // 數據層：新增（POST，支援陣列批量）
+  function apiInsert(data){
+    return fetch(SUPABASE_URL + '/rest/v1/' + TABLE, {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify(data)
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+    });
+  }
+
+  // 數據層：更新（PATCH）
+  function apiUpdate(id, patch){
+    return fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + id, {
+      method: 'PATCH',
+      headers: apiHeaders(),
+      body: JSON.stringify(patch)
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+    });
+  }
+
+  // 數據層：刪除（DELETE）
+  function apiDelete(id){
+    return fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + id, {
+      method: 'DELETE',
+      headers: apiHeaders()
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+    });
+  }
+
+  // 渲染層：統一入口
+  function renderAll(rows){
+    renderPending(rows);
+    renderList(rows);
+  }
+
+  function renderPending(rows){
+    var pending = rows.filter(function(r){ return r.status === '待審核'; });
+    if(pending.length === 0){
+      $('pendingSection').style.display = 'none';
+      return;
+    }
+    $('pendingSection').style.display = 'block';
+    var html = '';
+    pending.forEach(function(r){
+      html += '<div class="pending-item"><div class="pi-content">'+
+        '<div class="pi-title">'+escapeHtml(r.title||'(無標題)')+'</div>'+
+        '<div class="pi-meta">'+escapeHtml(r.type||'')+' · '+formatDate(r.date)+'</div>'+
+        '</div><button class="btn-approve" data-approve="'+r.id+'">核可</button></div>';
+    });
+    $('pendingList').innerHTML = html;
+  }
+
+  function renderList(rows){
+    var filtered = rows.filter(function(r){
+      if(state.currentTab !== 'all' && r.type !== state.currentTab) return false;
+      if(state.searchKeyword){
+        var kw = state.searchKeyword.toLowerCase();
+        var title = (r.title||'').toLowerCase();
+        var content = (r.content||'').toLowerCase();
+        if(title.indexOf(kw)===-1 && content.indexOf(kw)===-1) return false;
+      }
+      return true;
+    });
+
+    if(filtered.length === 0){
+      $('list').innerHTML = '<div class="list-empty">無符合條目的資料。點「+ 新增」建立第一筆。</div>';
+      return;
+    }
+
+    var html = '';
+    filtered.forEach(function(r){
+      var tc = typeClass(r.type);
+      var tagsHtml = '';
+      if(Array.isArray(r.tags) && r.tags.length){
+        tagsHtml = '<div class="item-tags">'+r.tags.map(function(t){ return '<span class="item-tag">'+escapeHtml(t)+'</span>'; }).join('')+'</div>';
+      }
+      var urlHtml = '';
+      if(r.source_link){ urlHtml = '<a href="'+escapeHtml(r.source_link)+'" target="_blank" rel="noopener">'+escapeHtml(r.source_text||r.source_link)+'</a>'; }
+      var actionsHtml = '';
+      if(r.status === '待審核'){
+        actionsHtml += '<button class="btn-action approve" data-approve="'+r.id+'">核可</button>';
+      }
+      actionsHtml += '<button class="btn-action" data-edit="'+r.id+'">編輯</button>';
+      actionsHtml += '<button class="btn-action danger" data-del="'+r.id+'">刪除</button>';
+
+      html += '<div class="item-card">'+
+        '<div class="item-head"><div class="item-title">'+escapeHtml(r.title||'(無標題)')+'</div>'+
+        '<span class="item-type '+tc+'">'+escapeHtml(r.type||'')+'</span></div>'+
+        tagsHtml+
+        '<div class="item-content">'+escapeHtml(r.content||'')+'</div>'+
+        '<div class="item-meta">'+
+          '<span>'+formatDate(r.date)+'</span>'+
+          (urlHtml ? '<span>來源：'+urlHtml+'</span>' : '')+
+          (r.note ? '<span>備註：'+escapeHtml(r.note)+'</span>' : '')+
+        '</div>'+
+        '<div class="item-actions">'+actionsHtml+'</div>'+
+        '</div>';
+    });
+    $('list').innerHTML = html;
+  }
+
+  // 統一刷新入口
+  function refreshAll(){
+    loadData();
+  }
+
+  // 表單
+  function openForm(editingId){
+    state.editingId = editingId || null;
+    $('formPanel').classList.add('show');
+    $('formTitle').textContent = editingId ? '編輯條目' : '新增條目';
+    if(!editingId){
+      $('fType').value = (state.currentTab !== 'all') ? state.currentTab : '法規';
+      $('fTitle').value = '';
+      $('fContent').value = '';
+      $('fDate').value = todayStr();
+      $('fUrlText').value = '';
+      $('fUrlLink').value = '';
+      $('fNote').value = '';
+      state.selectedTags = [];
+    } else {
+      var row = state.allRows.filter(function(r){ return String(r.id) === String(editingId); })[0];
+      if(!row){ closeForm(); return; }
+      $('fType').value = row.type || '法規';
+      $('fTitle').value = row.title || '';
+      $('fContent').value = row.content || '';
+      $('fDate').value = row.date ? formatDate(row.date) : todayStr();
+      $('fUrlText').value = row.source_text || '';
+      $('fUrlLink').value = row.source_link || '';
+      $('fNote').value = row.note || '';
+      state.selectedTags = Array.isArray(row.tags) ? row.tags.slice() : [];
+    }
+    renderTagChips();
+    $('fTitle').focus();
+  }
+
+  function closeForm(){
+    $('formPanel').classList.remove('show');
+    state.editingId = null;
+  }
+
+  function renderTagChips(){
+    var html = '';
+    TAG_OPTIONS.forEach(function(tag){
+      var active = state.selectedTags.indexOf(tag) !== -1;
+      html += '<span class="tag-chip'+(active?' active':'')+'" data-tag="'+escapeHtml(tag)+'">'+escapeHtml(tag)+'</span>';
+    });
+    $('tagGroup').innerHTML = html;
+  }
+
+  function collectForm(){
+    var data = {
+      title: $('fTitle').value.trim(),
+      content: $('fContent').value.trim(),
+      type: $('fType').value,
+      tags: state.selectedTags.slice(),
+      date: $('fDate').value || null,
+      status: '已核可'
+    };
+    if(!data.title) data.title = '(無標題)';
+    var link = $('fUrlLink').value.trim();
+    if(link){
+      data.source_text = $('fUrlText').value.trim() || link;
+      data.source_link = link;
+    }
+    if($('fNote').value.trim()){
+      data.note = $('fNote').value.trim();
+    }
+    return data;
+  }
+
+  function submitForm(){
+    if(!$('fTitle').value.trim()){
+      showToast('請填寫標題');
+      return;
+    }
+    var btn = $('btnSubmit');
+    btn.disabled = true; btn.textContent = '儲存中…';
+    var data = collectForm();
+
+    function done(){
+      closeForm();
+      btn.disabled = false; btn.textContent = '儲存';
+      refreshAll();
+      showToast(state.editingId ? '已更新' : '已新增');
+    }
+
+    function fail(err){
+      console.error('[kb] submit fail:', err);
+      btn.disabled = false; btn.textContent = '儲存';
+      showToast('儲存失敗：'+(err.message||'請檢查 Supabase 連線'));
+    }
+
+    if(state.editingId){
+      apiUpdate(state.editingId, data).then(done).catch(fail);
+    } else {
+      apiInsert(data).then(done).catch(fail);
+    }
+  }
+
+  function approveRecord(id){
+    apiUpdate(id, { status: '已核可' })
+      .then(function(){ showToast('已核可'); refreshAll(); })
+      .catch(function(err){ console.error('[kb] approve fail:', err); showToast('核可失敗'); });
+  }
+
+  function deleteRecord(id){
+    apiDelete(id)
+      .then(function(){ showToast('已刪除'); refreshAll(); })
+      .catch(function(err){ console.error('[kb] delete fail:', err); showToast('刪除失敗'); });
+  }
+
+  // Modal
+  var modalCallback = null;
+  function showModal(title, msg, cb){
+    $('modalTitle').textContent = title;
+    $('modalMsg').textContent = msg;
+    modalCallback = cb;
+    $('modalMask').classList.add('show');
+  }
+  function hideModal(){ $('modalMask').classList.remove('show'); modalCallback = null; }
+
+  // 導出/匯入
+  function exportJSON(){
+    if(state.allRows.length === 0){ showToast('無資料可導出'); return; }
+    var data = JSON.stringify(state.allRows, null, 2);
+    var blob = new Blob([data], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '勞動法規知識庫備份_'+todayStr()+'.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('已導出 '+state.allRows.length+' 筆');
+  }
+
+  function importJSON(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        var arr = JSON.parse(e.target.result);
+        if(!Array.isArray(arr)) throw new Error('not array');
+        var batch = arr.slice(0, 100).map(function(r){
+          return {
+            title: r.title || r['標題'] || '(無標題)',
+            content: r.content || r['內容'] || '',
+            type: r.type || r['類型'] || '法規',
+            tags: Array.isArray(r.tags) ? r.tags : (Array.isArray(r['標籤']) ? r['標籤'] : []),
+            source_text: r.source_text || (r['來源'] && r['來源'].text) || '',
+            source_link: r.source_link || (r['來源'] && r['來源'].link) || '',
+            date: r.date || (r['日期'] ? formatDate(r['日期']) : null),
+            note: r.note || r['備註'] || '',
+            status: r.status || r['狀態'] || '已核可'
+          };
+        });
+        apiInsert(batch)
+          .then(function(){ showToast('已匯入 '+batch.length+' 筆'); refreshAll(); })
+          .catch(function(err){ console.error('[kb] import fail:', err); showToast('匯入失敗：'+(err.message||'')); });
+      } catch(err){
+        showToast('檔案格式錯誤');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function clearAll(){
+    if(state.allRows.length === 0){ showToast('無資料可清空'); return; }
+    // Supabase REST 刪除全部：用 filter id=gte.0
+    fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=gte.0', {
+      method: 'DELETE',
+      headers: apiHeaders()
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      showToast('已清空全部資料');
+      refreshAll();
+    }).catch(function(err){
+      console.error('[kb] clear fail:', err);
+      showToast('清空失敗：'+(err.message||''));
+    });
+  }
+
+  // 事件綁定
+  function bindEvents(){
+    var tabs = $('tabs');
+    tabs.addEventListener('click', function(e){
+      var t = e.target.closest('.tab');
+      if(!t) return;
+      var all = tabs.querySelectorAll('.tab');
+      for(var i=0;i<all.length;i++){ all[i].classList.remove('active'); }
+      t.classList.add('active');
+      state.currentTab = t.getAttribute('data-tab');
+      renderList(state.allRows);
+    });
+
+    $('searchInput').addEventListener('input', function(e){
+      state.searchKeyword = e.target.value.trim();
+      renderList(state.allRows);
+    });
+
+    $('btnNew').addEventListener('click', function(){ openForm(null); });
+    $('btnCancel').addEventListener('click', closeForm);
+    $('btnSubmit').addEventListener('click', submitForm);
+
+    $('tagGroup').addEventListener('click', function(e){
+      var chip = e.target.closest('.tag-chip');
+      if(!chip) return;
+      var tag = chip.getAttribute('data-tag');
+      var idx = state.selectedTags.indexOf(tag);
+      if(idx===-1) state.selectedTags.push(tag);
+      else state.selectedTags.splice(idx,1);
+      renderTagChips();
+    });
+
+    $('list').addEventListener('click', function(e){
+      var t = e.target;
+      if(t.dataset.approve){ approveRecord(t.dataset.approve); }
+      else if(t.dataset.edit){ openForm(t.dataset.edit); }
+      else if(t.dataset.del){
+        showModal('確認刪除','刪除後無法復原，確認刪除這筆條目？', function(){ deleteRecord(t.dataset.del); });
+      }
+    });
+
+    $('pendingList').addEventListener('click', function(e){
+      var t = e.target;
+      if(t.dataset.approve){ approveRecord(t.dataset.approve); }
+    });
+
+    $('btnExport').addEventListener('click', exportJSON);
+    $('btnImport').addEventListener('click', function(){ $('importFile').click(); });
+    $('importFile').addEventListener('change', function(e){
+      if(e.target.files[0]) importJSON(e.target.files[0]);
+      e.target.value = '';
+    });
+    $('btnClear').addEventListener('click', function(){
+      showModal('確認清空','將刪除所有條目（共 '+state.allRows.length+' 筆），此操作無法復原。確認清空？', clearAll);
+    });
+
+    $('modalCancel').addEventListener('click', hideModal);
+    $('modalConfirm').addEventListener('click', function(){
+      if(modalCallback) modalCallback();
+      hideModal();
+    });
+    $('modalMask').addEventListener('click', function(e){
+      if(e.target === $('modalMask')) hideModal();
+    });
+  }
+
+  // 初始化
+  function init(){
+    bindEvents();
+    if(!CONFIGURED){
+      $('configBanner').style.display = 'block';
+      $('controls').style.display = 'none';
+      $('footer').style.display = 'none';
+      $('list').innerHTML = '<div class="list-empty">請先設定 Supabase 連線（見上方紅色提示）</div>';
+      setSync('offline');
+      return;
+    }
+    $('configBanner').style.display = 'none';
+    $('controls').style.display = 'flex';
+    $('footer').style.display = 'flex';
+    loadData();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
