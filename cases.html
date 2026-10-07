@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勞資調解案件管理台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#534AB7;--primary-dark:#3C3489;--primary-light:#EEEDFE;--primary-mid:#7F77DD;--text:#2C2C2A;--text-muted:#5F5E5A;--text-hint:#888780;--border:#D3D1C7;--border-purple:#CECBF6;--danger:#A32D2D;--danger-light:#FCEBEB;--success:#3B6D11;--success-light:#EAF3DE;--warning:#854F0B;--warning-light:#FAEEDA;--bg:#F1EFE8;--card:#FFFFFF;--radius:12px;--radius-sm:8px}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;border-bottom:2px solid var(--primary)}
+.header h1{font-size:20px;font-weight:500;color:var(--primary-dark)}
+.header a{font-size:13px;color:var(--text-muted);text-decoration:none}
+.sync-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);background:var(--primary-light);padding:6px 12px;border-radius:20px;border:1px solid var(--border-purple)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--success)}
+.sync-dot.syncing{background:var(--primary-mid);animation:pulse 1s infinite}
+.sync-dot.offline{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.privacy-banner{background:var(--warning-light);border:1px solid var(--warning);border-radius:var(--radius-sm);padding:10px 14px;margin:12px 0;font-size:12px;color:var(--warning);line-height:1.5}
+.pending-section{background:var(--danger-light);border:1px solid var(--danger);border-radius:var(--radius);padding:12px 16px;margin:16px 0}
+.pending-section h2{font-size:15px;font-weight:500;color:var(--danger);margin-bottom:8px}
+.pending-item{background:#fff;border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.pending-item:last-child{margin-bottom:0}
+.pending-item .pi-content{flex:1;min-width:0}
+.pending-item .pi-title{font-weight:500;font-size:14px}
+.pending-item .pi-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.btn-action-sm{background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;min-height:36px;flex-shrink:0}
+.btn-action-sm:hover{background:var(--primary-dark)}
+.pending-empty{font-size:13px;color:var(--text-muted);padding:8px 0}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+.tabs{display:flex;gap:4px;background:#fff;border-radius:var(--radius-sm);padding:4px;border:1px solid var(--border)}
+.tab{padding:8px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;border-radius:6px;color:var(--text-muted);min-height:36px}
+.tab.active{background:var(--primary);color:#fff;font-weight:500}
+.search-box{flex:1;min-width:180px;position:relative}
+.search-box input{width:100%;padding:8px 12px 8px 34px;font-size:16px;border:1px solid var(--border);border-radius:var(--radius-sm);outline:none}
+.search-box input:focus{border-color:var(--primary)}
+.search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-hint)}
+.btn-new{background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:var(--radius-sm);font-size:14px;cursor:pointer;min-height:40px}
+.btn-new:hover{background:var(--primary-dark)}
+.form-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:none}
+.form-panel.show{display:block}
+.form-panel h2{font-size:16px;font-weight:500;color:var(--primary-dark);margin-bottom:12px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{display:flex;flex-direction:column;gap:4px}
+.form-field.full{grid-column:1/-1}
+.form-field label{font-size:13px;color:var(--text-muted)}
+.form-field input,.form-field select,.form-field textarea{padding:8px 10px;font-size:16px;border:1px solid var(--border);border-radius:6px;outline:none;font-family:inherit}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--primary)}
+.form-field textarea{min-height:60px;resize:vertical}
+.form-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.btn-submit{background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:var(--radius-sm);font-size:14px;cursor:pointer;min-height:44px}
+.btn-submit:hover{background:var(--primary-dark)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+.btn-cancel{background:transparent;color:var(--text-muted);border:1px solid var(--border);padding:10px 16px;border-radius:var(--radius-sm);font-size:14px;cursor:pointer;min-height:44px}
+.list{display:flex;flex-direction:column;gap:12px}
+.case-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;border-left:4px solid var(--primary)}
+.case-card.stage-pai{border-left-color:var(--danger)}
+.case-card.stage-tiao{border-left-color:var(--warning)}
+.case-card.stage-jie{border-left-color:var(--success)}
+.case-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.case-no{font-size:16px;font-weight:500;color:var(--text)}
+.case-stage{font-size:11px;padding:3px 10px;border-radius:10px;font-weight:500;flex-shrink:0}
+.stage-pai .case-stage{background:var(--danger-light);color:var(--danger)}
+.stage-tiao .case-stage{background:var(--warning-light);color:var(--warning)}
+.stage-jie .case-stage{background:var(--success-light);color:var(--success)}
+.case-parties{font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.case-dispute{font-size:14px;font-weight:500;margin:6px 0}
+.case-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-muted);margin-top:8px}
+.case-detail{font-size:13px;margin-top:8px;color:var(--text)}
+.case-detail .cd-label{color:var(--text-muted);font-size:12px;margin-top:6px}
+.case-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn-action{font-size:12px;border:1px solid var(--border);background:transparent;padding:4px 10px;border-radius:6px;cursor:pointer;color:var(--text-muted);min-height:32px}
+.btn-action:hover{border-color:var(--primary);color:var(--primary)}
+.btn-action.danger:hover{border-color:var(--danger);color:var(--danger)}
+.list-empty{text-align:center;padding:40px;color:var(--text-hint);font-size:14px}
+.footer{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+.footer .left{display:flex;gap:8px;flex-wrap:wrap}
+.btn-footer{font-size:12px;border:1px solid var(--border);background:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--text-muted);min-height:36px}
+.btn-footer:hover{border-color:var(--primary);color:var(--primary)}
+.modal-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:24px;max-width:400px;width:90%}
+.modal h3{font-size:16px;margin-bottom:12px;color:var(--danger)}
+.modal p{font-size:14px;margin-bottom:16px;color:var(--text-muted)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:200;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}.header h1{font-size:18px}.case-no{font-size:15px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div><h1>勞資調解案件管理台</h1><a href="https://junrong1124.github.io/labor-law-kb/">← 返回知識庫台</a></div>
+    <div class="sync-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">載入中</span></div>
+  </div>
+
+  <div class="privacy-banner">
+    <b>保密提醒：</b>本台僅用代稱建檔（勞方甲乙丙、資方A/B公司），案號對照表請自行保管，勿將真實當事人姓名建檔於此。
+  </div>
+
+  <div class="pending-section" id="pendingSection" style="display:none">
+    <h2>待處理案件</h2>
+    <div id="pendingList"></div>
+  </div>
+
+  <div class="controls">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="all">全部</button>
+      <button class="tab" data-tab="待排程">待排程</button>
+      <button class="tab" data-tab="調解中">調解中</button>
+      <button class="tab" data-tab="已結案">已結案</button>
+    </div>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="搜尋案號或爭點…">
+    </div>
+    <button class="btn-new" id="btnNew">+ 新增案件</button>
+  </div>
+
+  <div class="form-panel" id="formPanel">
+    <h2 id="formTitle">新增案件</h2>
+    <div class="form-grid">
+      <div class="form-field"><label>案號</label><input type="text" id="fCaseNo" placeholder="M2026-004"></div>
+      <div class="form-field"><label>階段</label><select id="fStage"><option>待排程</option><option>已排程</option><option>調解中</option><option>已結案</option></select></div>
+      <div class="form-field"><label>勞方代稱</label><input type="text" id="fLabor" placeholder="甲、乙、丙…"></div>
+      <div class="form-field"><label>資方代稱</label><input type="text" id="fEmployer" placeholder="A公司、B公司…"></div>
+      <div class="form-field"><label>申請日期</label><input type="date" id="fApplyDate"></div>
+      <div class="form-field"><label>調解日期</label><input type="date" id="fMedDate"></div>
+      <div class="form-field full"><label>爭點</label><input type="text" id="fDispute" placeholder="例如：資遣費計算基準爭議"></div>
+      <div class="form-field full"><label>勞方主張</label><textarea id="fLaborClaim" placeholder="勞方的主要主張"></textarea></div>
+      <div class="form-field full"><label>資方主張</label><textarea id="fEmployerClaim" placeholder="資方的主要主張"></textarea></div>
+      <div class="form-field full"><label>調解方案</label><textarea id="fSolution" placeholder="調解方案或待調解"></textarea></div>
+      <div class="form-field"><label>結論</label><select id="fResult"><option>進行中</option><option>調解成立</option><option>調解不成立</option><option>撤回</option></select></div>
+      <div class="form-field full"><label>備註</label><input type="text" id="fNote" placeholder="其他備註"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" id="btnCancel">取消</button>
+      <button class="btn-submit" id="btnSubmit">儲存</button>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="footer">
+    <div class="left">
+      <button class="btn-footer" id="btnExport">導出 JSON</button>
+      <button class="btn-footer" id="btnImport">匯入</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+    <button class="btn-footer" id="btnClear">清空全部</button>
+  </div>
+</div>
+
+<div class="modal-mask" id="modalMask"><div class="modal"><h3 id="modalTitle">確認</h3><p id="modalMsg"></p><div class="modal-actions"><button class="btn-cancel" id="modalCancel">取消</button><button class="btn-submit" id="modalConfirm" style="background:var(--danger)">確認</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var SUPABASE_URL='https://trlrsnnotthblryrefez.supabase.co';
+  var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybHJzbm5vdHRoYmxyeXJlZmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzNzYxNTUsImV4cCI6MjEwNjk1MjE1NX0.BC120KHg3NO9tSw0WIaVj6AQKztjowdXf6PjxL_Zuso';
+  var TABLE='cases';
+  var state={allRows:[],currentTab:'all',searchKeyword:'',editingId:null};
+  function $(id){return document.getElementById(id);}
+  function headers(){return{'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json','Prefer':'return=representation'};}
+  function setSync(s){var d=$('syncDot'),t=$('syncText');d.className='sync-dot';if(s==='syncing'){d.classList.add('syncing');t.textContent='同步中';}else if(s==='offline'){d.classList.add('offline');t.textContent='連線失敗';}else{t.textContent='已同步';}}
+  function showToast(m){var t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
+  function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function fmtDate(d){if(!d)return'';if(typeof d==='string'&&d.length>=10)return d.substring(0,10);var dt=new Date(d);if(isNaN(dt))return String(d);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
+  function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function stageClass(s){if(s==='待排程')return'stage-pai';if(s==='調解中')return'stage-tiao';if(s==='已結案')return'stage-jie';return'';}
+
+  function loadData(){
+    setSync('syncing');
+    fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?select=*&order=apply_date.desc&limit=200',{headers:headers()})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(rows){state.allRows=rows||[];setSync('synced');renderAll(state.allRows);})
+      .catch(function(err){console.error('[cases] load:',err);setSync('offline');renderAll([]);});
+  }
+  function apiInsert(d){return fetch(SUPABASE_URL+'/rest/v1/'+TABLE,{method:'POST',headers:headers(),body:JSON.stringify(d)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);});}
+  function apiUpdate(id,p){return fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?id=eq.'+id,{method:'PATCH',headers:headers(),body:JSON.stringify(p)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);});}
+  function apiDelete(id){return fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?id=eq.'+id,{method:'DELETE',headers:headers()}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);});}
+
+  function renderAll(rows){renderPending(rows);renderList(rows);}
+  function renderPending(rows){
+    var p=rows.filter(function(r){return r.stage==='待排程';});
+    if(p.length===0){$('pendingSection').style.display='none';return;}
+    $('pendingSection').style.display='block';
+    var h='';
+    p.forEach(function(r){
+      h+='<div class="pending-item"><div class="pi-content"><div class="pi-title">'+esc(r.case_no||'(無案號)')+' '+esc(r.dispute_point||'')+'</div><div class="pi-meta">'+esc(r.labor_alias||'')+' vs '+esc(r.employer_alias||'')+' · 申請日'+fmtDate(r.apply_date)+'</div></div><button class="btn-action-sm" data-schedule="'+r.id+'">排程</button></div>';
+    });
+    $('pendingList').innerHTML=h;
+  }
+  function renderList(rows){
+    var f=rows.filter(function(r){
+      if(state.currentTab!=='all'&&r.stage!==state.currentTab)return false;
+      if(state.searchKeyword){var k=state.searchKeyword.toLowerCase();var no=(r.case_no||'').toLowerCase();var dp=(r.dispute_point||'').toLowerCase();if(no.indexOf(k)===-1&&dp.indexOf(k)===-1)return false;}
+      return true;
+    });
+    if(f.length===0){$('list').innerHTML='<div class="list-empty">無符合條件的案件</div>';return;}
+    var h='';
+    f.forEach(function(r){
+      var sc=stageClass(r.stage);
+      var dh='';
+      if(r.dispute_point)dh+='<div class="case-dispute">爭點：'+esc(r.dispute_point)+'</div>';
+      var detail='';
+      if(r.labor_claim)detail+='<div class="cd-label">勞方主張</div><div>'+esc(r.labor_claim)+'</div>';
+      if(r.employer_claim)detail+='<div class="cd-label">資方主張</div><div>'+esc(r.employer_claim)+'</div>';
+      if(r.solution)detail+='<div class="cd-label">調解方案</div><div>'+esc(r.solution)+'</div>';
+      h+='<div class="case-card '+sc+'">'+
+        '<div class="case-head"><div class="case-no">'+esc(r.case_no||'(無案號)')+'</div><div class="case-stage">'+esc(r.stage||'')+' · '+esc(r.result||'')+'</div></div>'+
+        '<div class="case-parties">勞方 '+esc(r.labor_alias||'？')+' vs 資方 '+esc(r.employer_alias||'？')+'</div>'+
+        dh+
+        '<div class="case-meta"><span>申請日 '+fmtDate(r.apply_date)+'</span>'+(r.mediation_date?'<span>調解日 '+fmtDate(r.mediation_date)+'</span>':'<span style="color:var(--danger)">未排調解日</span>')+(r.note?'<span>備註：'+esc(r.note)+'</span>':'')+'</div>'+
+        (detail?'<div class="case-detail">'+detail+'</div>':'')+
+        '<div class="case-actions"><button class="btn-action" data-edit="'+r.id+'">編輯</button><button class="btn-action danger" data-del="'+r.id+'">刪除</button></div>'+
+        '</div>';
+    });
+    $('list').innerHTML=h;
+  }
+  function refreshAll(){loadData();}
+
+  function openForm(id){
+    state.editingId=id||null;
+    $('formPanel').classList.add('show');
+    $('formTitle').textContent=id?'編輯案件':'新增案件';
+    if(!id){
+      $('fCaseNo').value='M'+todayStr().replace(/-/g,'').substring(2)+'-';
+      $('fStage').value='待排程';$('fResult').value='進行中';
+      $('fLabor').value='';$('fEmployer').value='';$('fDispute').value='';
+      $('fLaborClaim').value='';$('fEmployerClaim').value='';$('fSolution').value='';
+      $('fNote').value='';$('fApplyDate').value=todayStr();$('fMedDate').value='';
+    }else{
+      var r=state.allRows.filter(function(x){return String(x.id)===String(id);})[0];
+      if(!r){closeForm();return;}
+      $('fCaseNo').value=r.case_no||'';$('fStage').value=r.stage||'待排程';
+      $('fLabor').value=r.labor_alias||'';$('fEmployer').value=r.employer_alias||'';
+      $('fDispute').value=r.dispute_point||'';$('fLaborClaim').value=r.labor_claim||'';
+      $('fEmployerClaim').value=r.employer_claim||'';$('fSolution').value=r.solution||'';
+      $('fResult').value=r.result||'進行中';$('fNote').value=r.note||'';
+      $('fApplyDate').value=r.apply_date?fmtDate(r.apply_date):todayStr();
+      $('fMedDate').value=r.mediation_date?fmtDate(r.mediation_date):'';
+    }
+    $('fCaseNo').focus();
+  }
+  function closeForm(){$('formPanel').classList.remove('show');state.editingId=null;}
+  function collectForm(){
+    var d={case_no:$('fCaseNo').value.trim(),stage:$('fStage').value,result:$('fResult').value,
+      labor_alias:$('fLabor').value.trim(),employer_alias:$('fEmployer').value.trim(),
+      dispute_point:$('fDispute').value.trim(),labor_claim:$('fLaborClaim').value.trim(),
+      employer_claim:$('fEmployerClaim').value.trim(),solution:$('fSolution').value.trim(),
+      apply_date:$('fApplyDate').value||null,mediation_date:$('fMedDate').value||null,
+      note:$('fNote').value.trim()};
+    return d;
+  }
+  function submitForm(){
+    if(!$('fCaseNo').value.trim()){showToast('請填案號');return;}
+    var btn=$('btnSubmit');btn.disabled=true;btn.textContent='儲存中…';
+    var d=collectForm();
+    function done(){closeForm();btn.disabled=false;btn.textContent='儲存';refreshAll();showToast(state.editingId?'已更新':'已新增');}
+    function fail(e){console.error('[cases] submit:',e);btn.disabled=false;btn.textContent='儲存';showToast('儲存失敗：'+(e.message||''));}
+    if(state.editingId){apiUpdate(state.editingId,d).then(done).catch(fail);}else{apiInsert(d).then(done).catch(fail);}
+  }
+  function scheduleCase(id){apiUpdate(id,{stage:'已排程'}).then(function(){showToast('已排程');refreshAll();}).catch(function(e){showToast('排程失敗');});}
+  function deleteCase(id){apiDelete(id).then(function(){showToast('已刪除');refreshAll();}).catch(function(e){showToast('刪除失敗');});}
+
+  var modalCb=null;
+  function showModal(t,m,cb){$('modalTitle').textContent=t;$('modalMsg').textContent=m;modalCb=cb;$('modalMask').classList.add('show');}
+  function hideModal(){$('modalMask').classList.remove('show');modalCb=null;}
+
+  function exportJSON(){if(state.allRows.length===0){showToast('無資料');return;}var d=JSON.stringify(state.allRows,null,2);var b=new Blob([d],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='調解案件備份_'+todayStr()+'.json';a.click();URL.revokeObjectURL(a.href);showToast('已導出 '+state.allRows.length+' 件');}
+  function importJSON(file){var r=new FileReader();r.onload=function(e){try{var a=JSON.parse(e.target.result);if(!Array.isArray(a))throw 0;var batch=a.slice(0,100).map(function(x){return{case_no:x.case_no,stage:x.stage||'待排程',result:x.result||'進行中',labor_alias:x.labor_alias,employer_alias:x.employer_alias,dispute_point:x.dispute_point,labor_claim:x.labor_claim,employer_claim:x.employer_claim,solution:x.solution,apply_date:x.apply_date,mediation_date:x.mediation_date,note:x.note};});apiInsert(batch).then(function(){showToast('已匯入'+batch.length+'件');refreshAll();}).catch(function(e){showToast('匯入失敗');});}catch(err){showToast('格式錯誤');}};r.readAsText(file);}
+  function clearAll(){if(state.allRows.length===0){showToast('無資料');return;}fetch(SUPABASE_URL+'/rest/v1/'+TABLE+'?id=gte.0',{method:'DELETE',headers:headers()}).then(function(r){if(!r.ok)throw 0;showToast('已清空');refreshAll();}).catch(function(){showToast('清空失敗');});}
+
+  function bindEvents(){
+    var tabs=$('tabs');
+    tabs.addEventListener('click',function(e){var t=e.target.closest('.tab');if(!t)return;var all=tabs.querySelectorAll('.tab');for(var i=0;i<all.length;i++)all[i].classList.remove('active');t.classList.add('active');state.currentTab=t.getAttribute('data-tab');renderList(state.allRows);});
+    $('searchInput').addEventListener('input',function(e){state.searchKeyword=e.target.value.trim();renderList(state.allRows);});
+    $('btnNew').addEventListener('click',function(){openForm(null);});
+    $('btnCancel').addEventListener('click',closeForm);
+    $('btnSubmit').addEventListener('click',submitForm);
+    $('list').addEventListener('click',function(e){var t=e.target;if(t.dataset.edit)openForm(t.dataset.edit);else if(t.dataset.del)showModal('確認刪除','刪除案件後無法復原。確認？',function(){deleteCase(t.dataset.del);});});
+    $('pendingList').addEventListener('click',function(e){var t=e.target;if(t.dataset.schedule)scheduleCase(t.dataset.schedule);});
+    $('btnExport').addEventListener('click',exportJSON);
+    $('btnImport').addEventListener('click',function(){$('importFile').click();});
+    $('importFile').addEventListener('change',function(e){if(e.target.files[0])importJSON(e.target.files[0]);e.target.value='';});
+    $('btnClear').addEventListener('click',function(){showModal('確認清空','將刪除所有案件（共'+state.allRows.length+'件）。確認？',clearAll);});
+    $('modalCancel').addEventListener('click',hideModal);
+    $('modalConfirm').addEventListener('click',function(){if(modalCb)modalCb();hideModal();});
+    $('modalMask').addEventListener('click',function(e){if(e.target===$('modalMask'))hideModal();});
+  }
+  function init(){bindEvents();loadData();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</body>
+</html>
