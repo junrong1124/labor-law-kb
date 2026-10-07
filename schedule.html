@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>月度業務排程台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft JhengHei",sans-serif;background:#f1f5f4;color:#1f2937;font-size:15px;line-height:1.5;padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+header{background:#0d9488;color:#fff;padding:16px 18px;border-radius:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+header h1{font-size:19px;font-weight:700}
+header .sub{font-size:12px;opacity:.85;margin-top:2px}
+.sync{font-size:12px;background:rgba(255,255,255,.2);padding:5px 11px;border-radius:20px;white-space:nowrap}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+h2{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{font-size:12px;color:#64748b;font-weight:600}
+input,select,textarea{font-family:inherit;font-size:16px;padding:9px 11px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#1f2937;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid #0d9488;outline-offset:-1px;border-color:#0d9488}
+button{font-family:inherit;font-size:14px;padding:9px 15px;border:none;border-radius:9px;background:#0d9488;color:#fff;cursor:pointer;font-weight:600;min-height:44px}
+button:active{transform:scale(.98)}
+button.ghost{background:#e2e8f0;color:#334155}
+button.warn{background:#dc2626}
+button.sm{padding:6px 11px;min-height:36px;font-size:13px}
+.todaybox{border-left:5px solid #dc2626}
+.titem{display:flex;gap:11px;align-items:flex-start;padding:11px;border-radius:10px;background:#fef2f2;margin-bottom:8px}
+.titem.soon{background:#fffbeb;border-left:4px solid #f59e0b}
+.titem.today{background:#eff6ff;border-left:4px solid #2563eb}
+.titem .bd{flex:1;min-width:0}
+.titem .nm{font-weight:600;font-size:14px}
+.titem .mt{font-size:12px;color:#64748b;margin-top:2px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:#e2e8f0;color:#475569;margin-right:5px;font-weight:600}
+.badge.red{background:#fee2e2;color:#b91c1c}
+.badge.amber{background:#fef3c7;color:#b45309}
+.badge.blue{background:#dbeafe;color:#1d4ed8}
+.badge.green{background:#d1fae5;color:#047857}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.tab{padding:8px 15px;border-radius:20px;background:#e2e8f0;color:#475569;cursor:pointer;font-size:14px;font-weight:600;min-height:40px;display:flex;align-items:center}
+.tab.on{background:#0d9488;color:#fff}
+.row{display:flex;gap:11px;align-items:flex-start;padding:12px;border-bottom:1px solid #f1f5f4}
+.row:last-child{border-bottom:none}
+.row .bd{flex:1;min-width:0}
+.row .nm{font-weight:600;font-size:14px;word-break:break-word}
+.row .mt{font-size:12px;color:#64748b;margin-top:3px}
+.row.done{opacity:.5}
+.row.done .nm{text-decoration:line-through}
+.chk{width:32px;height:32px;min-height:32px;border:2px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;flex-shrink:0;margin-top:0;display:flex;align-items:center;justify-content:center;padding:0}
+.chk.on{background:#0d9488;border-color:#0d9488}
+.chk svg{display:none}
+.chk.on svg{display:block}
+.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:50;overflow-y:auto;padding:16px}
+.modal.on{display:block}
+.mbox{background:#fff;border-radius:14px;max-width:640px;margin:20px auto;padding:18px}
+.mrow{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.hint{font-size:12px;color:#64748b;margin-top:6px}
+.empty{text-align:center;color:#94a3b8;padding:26px;font-size:14px}
+@media(max-width:768px){
+  .wrap{padding:11px}
+  header h1{font-size:17px}
+  .grid2{grid-template-columns:1fr}
+  .bar .fld{width:100%}
+  .row{padding:11px 4px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>月度業務排程台</h1>
+      <div class="sub">每月固定業務自動排程・逾期提醒・可隨時調整規則</div>
+    </div>
+    <div class="sync" id="sync">載入中</div>
+  </header>
+
+  <div class="card">
+    <div class="bar">
+      <div class="fld" style="min-width:150px"><label>月份</label><input type="month" id="fMonth"></div>
+      <div class="fld" style="min-width:170px"><label>本月發薪日（推算依據）</label><input type="date" id="fPayday"></div>
+      <button id="btnSavePay">儲存發薪日</button>
+      <button class="ghost" id="btnRules">規則管理</button>
+      <button class="ghost" id="btnExport">導出備份</button>
+    </div>
+    <div class="hint" id="payHint">設定發薪日後，依賴發薪日的業務（薪資異常通知、領現名單、外國人所得稅申報）會自動推算截止日。</div>
+  </div>
+
+  <div class="card todaybox">
+    <h2><span class="badge red" id="todayCnt">0</span>今天要處理</h2>
+    <div id="todayList"><div class="empty">載入中…</div></div>
+  </div>
+
+  <div class="card">
+    <h2>本月排程</h2>
+    <div class="tabs">
+      <div class="tab on" data-f="all">全部</div>
+      <div class="tab" data-f="undone">未完成</div>
+      <div class="tab" data-f="done">已完成</div>
+    </div>
+    <div class="bar" style="margin-bottom:12px">
+      <div class="fld" style="min-width:140px"><label>類別篩選</label><select id="fCat"><option value="">全部類別</option></select></div>
+      <div class="fld" style="flex:1;min-width:180px"><label>搜尋</label><input id="fSearch" placeholder="業務名稱關鍵字"></div>
+    </div>
+    <div id="listBox"><div class="empty">載入中…</div></div>
+  </div>
+</div>
+
+<div class="modal" id="ruleModal">
+  <div class="mbox">
+    <h2>規則管理（可新增／編輯／刪除／停用）</h2>
+    <div id="ruleList"><div class="empty">載入中…</div></div>
+    <div class="mrow">
+      <button id="btnAddRule">新增規則</button>
+      <button class="ghost" id="btnCloseRule">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="mbox">
+    <h2 id="editTitle">編輯規則</h2>
+    <input type="hidden" id="eId">
+    <div class="fld" style="margin-bottom:11px"><label>業務名稱</label><input id="eName" placeholder="例：申報外國人所得稅"></div>
+    <div class="grid2" style="margin-bottom:11px">
+      <div class="fld"><label>類別</label><input id="eCat" placeholder="薪資／出勤／團險…"></div>
+      <div class="fld"><label>規則類型</label><select id="eType">
+        <option value="fixed">固定日期</option>
+        <option value="relative">依賴發薪日推算</option>
+        <option value="weekly">每週</option>
+        <option value="quarterly">每季／每年</option>
+      </select></div>
+    </div>
+    <div class="grid2" id="fixedWrap" style="margin-bottom:11px">
+      <div class="fld"><label>起始日</label><input type="number" id="eStart" min="1" max="31"></div>
+      <div class="fld"><label>截止日</label><input type="number" id="eEnd" min="1" max="31"></div>
+    </div>
+    <div class="fld" id="relWrap" style="margin-bottom:11px;display:none">
+      <label>發薪日後幾天內</label><input type="number" id="eOffset" min="0" max="60">
+    </div>
+    <div class="fld" style="margin-bottom:11px"><label>備註</label><textarea id="eNote" rows="2" placeholder="例：遇假日提前／收到函文才做"></textarea></div>
+    <div class="fld" style="margin-bottom:4px"><label>排序</label><input type="number" id="eSort"></div>
+    <div class="mrow">
+      <button id="btnSaveRule">儲存</button>
+      <button class="ghost" id="btnCancelEdit">取消</button>
+      <button class="warn" id="btnDelRule" style="display:none">刪除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL='https://trlrsnnotthblryrefez.supabase.co';
+var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybHJzbm5vdHRoYmxyeXJlZmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzNzYxNTUsImV4cCI6MjEwNjk1MjE1NX0.BC120KHg3NO9tSw0WIaVj6AQKztjowdXf6PjxL_Zuso';
+var LSK='wb_schedule_';
+
+var state={rules:[],done:[],ym:'',payday:'',filter:'all',cat:'',search:'',today:''};
+
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function pad(n){return n<10?'0'+n:''+n;}
+function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parseD(s){if(!s)return null;var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+function addDays(s,n){var d=parseD(s);if(!d)return null;d.setDate(d.getDate()+n);return iso(d);}
+function daysInMonth(ym){var p=ym.split('-');return new Date(+p[0],+p[1],0).getDate();}
+function diffDays(a,b){var x=parseD(a),y=parseD(b);if(!x||!y)return null;return Math.round((y-x)/86400000);}
+
+function api(path,opts){
+  opts=opts||{};
+  opts.headers=Object.assign({'apikey':ANON,'Authorization':'Bearer '+ANON,'Content-Type':'application/json'},opts.headers||{});
+  return fetch(SUPABASE_URL+'/rest/v1/'+path,opts).then(function(r){
+    if(!r.ok)return r.text().then(function(t){throw new Error(t.substring(0,120));});
+    var txt=r.headers.get('content-length');
+    if(opts.method==='DELETE'||txt==='0')return r.text();
+    return r.json();
+  });
+}
+
+function sync(txt,cls){var e=$('sync');e.textContent=txt;e.style.background=cls||'rgba(255,255,255,.2)';}
+
+function loadData(){
+  sync('同步中','#f59e0b');
+  var q='?select=*&order=rule_id';
+  return Promise.all([
+    api('schedule_rules?select=*&order=sort_order.asc,id.asc'),
+    api('schedule_done?select=*'),
+    api('schedule_month?select=*')
+  ]).then(function(res){
+    state.rules=res[0]||[];
+    state.done=res[1]||[];
+    var mm={};(res[2]||[]).forEach(function(m){mm[m.ym]=m.payday;});
+    state.payday=mm[state.ym]||'';
+    state.months=mm;
+    $('fPayday').value=state.payday||'';
+    try{localStorage.setItem(LSK+'cache',JSON.stringify({r:state.rules,d:state.done}));}catch(e){}
+    sync('已同步','rgba(255,255,255,.2)');
+  }).catch(function(e){
+    sync('離線模式','#dc2626');
+    try{var c=JSON.parse(localStorage.getItem(LSK+'cache')||'null');if(c){state.rules=c.r;state.done=c.d;}}catch(x){}
+    console.error(e);
+  }).then(function(){refreshAll();});
+}
+
+function taskKey(r,due){
+  if(r.rule_type==='weekly'||r.rule_type==='quarterly')return due+'#'+r.id;
+  return state.ym+'#'+r.id;
+}
+function isDone(key){return state.done.some(function(d){return d.ym===key;});}
+
+function buildTasks(){
+  var out=[],dim=daysInMonth(state.ym),td=state.today,wd=new Date().getDay();
+  state.rules.forEach(function(r){
+    if(r.enabled===false)return;
+    var due=null,label='',sortKey=999;
+    if(r.rule_type==='fixed'){
+      var s=Math.min(r.start_day||1,dim),e=Math.min(r.end_day||r.start_day||1,dim);
+      due=state.ym+'-'+pad(e);
+      label=(s===e?e+'日':s+'–'+e+'日');
+      sortKey=e;
+    }else if(r.rule_type==='relative'){
+      if(!state.payday)return;
+      due=addDays(state.payday,r.offset_days||0);
+      label='發薪日'+(r.offset_days?('+'+r.offset_days+'天'):'當日')+'（'+due.slice(5)+'）';
+      sortKey=parseD(due).getDate();
+    }else if(r.rule_type==='weekly'){
+      if(wd!==(r.start_day||5))return;
+      due=td;label='每週'+['日','一','二','三','四','五','六'][r.start_day||5];sortKey=99;
+    }else{
+      var q='Q'+(Math.floor(new Date().getMonth()/3)+1);
+      due=state.ym.slice(0,4)+'-'+q;label='每季／每年';sortKey=900;
+    }
+    var key=taskKey(r,due);
+    out.push({r:r,due:due,label:label,sortKey:sortKey,key:key,done:isDone(key),
+      dd:(r.rule_type==='quarterly'?null:diffDays(td,due))});
+  });
+  out.sort(function(a,b){return a.sortKey-b.sortKey||String(a.r.name).localeCompare(String(b.r.name));});
+  return out;
+}
+
+function refreshAll(){
+  renderCatOptions();
+  renderPayHint();
+  renderToday();
+  renderList();
+  if($('ruleModal').classList.contains('on'))renderRules();
+}
+var CATC={'薪資':'#2563eb','出勤':'#7c3aed','異動':'#0891b2','團險':'#059669','身障':'#b45309','所得稅':'#dc2626','稽核':'#475569','法扣':'#be123c','排班':'#65a30d','共用':'#0ea5e9','健保':'#16a34a','會議':'#c026d3','給付':'#0d9488'};
+function catColor(c){return CATC[c]||'#64748b';}
+
+function renderCatOptions(){
+  var set={};state.rules.forEach(function(r){if(r.category)set[r.category]=1;});
+  var cur=state.cat,html='<option value="">全部類別</option>';
+  Object.keys(set).sort().forEach(function(c){html+='<option value="'+esc(c)+'"'+(c===cur?' selected':'')+'>'+esc(c)+'</option>';});
+  $('fCat').innerHTML=html;state.cat=cur;
+}
+
+function renderPayHint(){
+  var t=$('payHint');
+  if(!state.payday){t.innerHTML='尚未設定本月發薪日。設定後，依賴發薪日的業務會自動推算截止日。';return;}
+  var rel=state.rules.filter(function(r){return r.rule_type==='relative'&&r.enabled!==false;});
+  if(!rel.length){t.innerHTML='本月發薪日：'+esc(state.payday);return;}
+  var s='本月發薪日 <b>'+esc(state.payday)+'</b> → ';
+  s+=rel.map(function(r){return esc(r.name)+'：<b>'+addDays(state.payday,r.offset_days||0).slice(5)+'</b>';}).join('、');
+  t.innerHTML=s;
+}
+
+function renderToday(){
+  var list=buildTasks().filter(function(t){return !t.done&&t.dd!==null&&t.dd<=3;});
+  $('todayCnt').textContent=list.length;
+  var box=$('todayList');
+  if(!list.length){box.innerHTML='<div class="empty">今天沒有到期或逾期的項目 ✓</div>';return;}
+  box.innerHTML=list.map(function(t){
+    var cls=t.dd<0?'':(t.dd===0?'today':'soon');
+    var tag=t.dd<0?('<span class="badge red">逾期 '+(-t.dd)+' 天</span>'):(t.dd===0?'<span class="badge blue">今天到期</span>':'<span class="badge amber">'+t.dd+' 天內</span>');
+    return '<div class="titem '+cls+'"><div class="bd"><div class="nm">'+esc(t.r.name)+'</div>'+
+      '<div class="mt">'+tag+'<span class="badge" style="background:'+catColor(t.r.category)+'22;color:'+catColor(t.r.category)+'">'+esc(t.r.category||'其他')+'</span>截止 '+t.due.slice(5)+
+      (t.r.note?'　'+esc(t.r.note):'')+'</div></div><button class="sm" data-done="'+esc(t.key)+'">完成</button></div>';
+  }).join('');
+}
+
+function renderList(){
+  var list=buildTasks();
+  if(state.filter==='undone')list=list.filter(function(t){return !t.done;});
+  if(state.filter==='done')list=list.filter(function(t){return t.done;});
+  if(state.cat)list=list.filter(function(t){return t.r.category===state.cat;});
+  if(state.search)list=list.filter(function(t){return String(t.r.name).indexOf(state.search)>=0;});
+  var box=$('listBox');
+  if(!list.length){box.innerHTML='<div class="empty">沒有符合的項目</div>';return;}
+  box.innerHTML=list.map(function(t){
+    var col=catColor(t.r.category);
+    var due=t.dd===null?t.label:(t.due.slice(5)+(t.dd<0&&!t.done?' <span class="badge red">逾期</span>':''));
+    return '<div class="row'+(t.done?' done':'')+'">'+
+      '<button class="chk'+(t.done?' on':'')+'" data-toggle="'+esc(t.key)+'" data-rid="'+t.r.id+'" data-due="'+t.due+'" aria-label="完成">'+
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></button>'+
+      '<div class="bd"><div class="nm">'+esc(t.r.name)+'</div><div class="mt">'+
+      '<span class="badge" style="background:'+col+'22;color:'+col+'">'+esc(t.r.category||'其他')+'</span>'+
+      due+(t.r.note?'　'+esc(t.r.note):'')+'</div></div>'+
+      '<button class="ghost sm" data-edit="'+t.r.id+'">改</button></div>';
+  }).join('');
+}
+
+function renderRules(){
+  var box=$('ruleList');
+  if(!state.rules.length){box.innerHTML='<div class="empty">尚無規則</div>';return;}
+  box.innerHTML=state.rules.map(function(r){
+    var d=r.rule_type==='fixed'?((r.start_day||'')+((r.end_day&&r.end_day!==r.start_day)?('–'+r.end_day):'')+' 日'):
+      (r.rule_type==='relative'?('發薪日+'+(r.offset_days||0)+'天'):
+      (r.rule_type==='weekly'?('每週'+['日','一','二','三','四','五','六'][r.start_day||5]):'每季／每年'));
+    return '<div class="row"><div class="bd"><div class="nm">'+esc(r.name)+(r.enabled===false?' <span class="badge">停用</span>':'')+'</div>'+
+      '<div class="mt"><span class="badge" style="background:'+catColor(r.category)+'22;color:'+catColor(r.category)+'">'+esc(r.category||'其他')+'</span>'+esc(d)+(r.note?'　'+esc(r.note):'')+'</div></div>'+
+      '<button class="ghost sm" data-edit="'+r.id+'">編輯</button></div>';
+  }).join('');
+}
+
+function toggleDone(key,rid,due){
+  var ex=state.done.filter(function(d){return d.ym===key;});
+  if(ex.length){
+    api('schedule_done?ym=eq.'+encodeURIComponent(key)+'&rule_id=eq.'+rid,{method:'DELETE'})
+      .then(function(){state.done=state.done.filter(function(d){return d.ym!==key;});refreshAll();})
+      .catch(function(e){alert('取消失敗');console.error(e);});
+  }else{
+    api('schedule_done',{method:'POST',headers:{'Prefer':'return=representation'},
+      body:JSON.stringify([{ym:key,rule_id:rid,done_date:state.today,note:''}])})
+      .then(function(rows){if(rows&&rows[0])state.done.push(rows[0]);refreshAll();})
+      .catch(function(e){alert('標記失敗');console.error(e);});
+  }
+}
+
+function openEdit(id){
+  var r=id?state.rules.filter(function(x){return x.id==id;})[0]:null;
+  $('eId').value=r?r.id:'';
+  $('eName').value=r?r.name:'';
+  $('eCat').value=r?(r.category||''):'';
+  $('eType').value=r?(r.rule_type||'fixed'):'fixed';
+  $('eStart').value=r?(r.start_day||''):'';
+  $('eEnd').value=r?(r.end_day||''):'';
+  $('eOffset').value=r?(r.offset_days||0):0;
+  $('eNote').value=r?(r.note||''):'';
+  $('eSort').value=r?(r.sort_order||99):99;
+  $('editTitle').textContent=r?'編輯規則':'新增規則';
+  $('btnDelRule').style.display=r?'inline-flex':'none';
+  toggleType();
+  $('editModal').classList.add('on');
+}
+function toggleType(){
+  var t=$('eType').value;
+  $('fixedWrap').style.display=(t==='fixed')?'grid':'none';
+  $('relWrap').style.display=(t==='relative')?'block':'none';
+}
+function saveRule(){
+  var name=$('eName').value.trim();
+  if(!name){alert('請填業務名稱');return;}
+  var o={name:name,category:$('eCat').value.trim()||null,rule_type:$('eType').value,
+    start_day:$('eStart').value?+$('eStart').value:null,
+    end_day:$('eEnd').value?+$('eEnd').value:null,
+    offset_days:$('eOffset').value?+$('eOffset').value:0,
+    base_key:$('eType').value==='relative'?'payday':null,
+    note:$('eNote').value.trim()||null,sort_order:+$('eSort').value||99,enabled:true};
+  var id=$('eId').value;
+  var call=id?api('schedule_rules?id=eq.'+id,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(o)})
+              :api('schedule_rules',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify([o])});
+  call.then(function(rows){
+    if(rows&&rows[0]){
+      if(id){state.rules=state.rules.map(function(x){return x.id==id?rows[0]:x;});}
+      else{state.rules.push(rows[0]);}
+    }
+    $('editModal').classList.remove('on');refreshAll();
+  }).catch(function(e){alert('儲存失敗');console.error(e);});
+}
+function delRule(){
+  var id=$('eId').value;if(!id)return;
+  if(!confirm('確定刪除這條規則？已完成紀錄會保留。'))return;
+  api('schedule_rules?id=eq.'+id,{method:'DELETE'}).then(function(){
+    state.rules=state.rules.filter(function(x){return x.id!=id;});
+    $('editModal').classList.remove('on');refreshAll();
+  }).catch(function(e){alert('刪除失敗');console.error(e);});
+}
+function exportJSON(){
+  var data={exported_at:new Date().toISOString(),ym:state.ym,payday:state.payday,rules:state.rules,done:state.done};
+  var b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='月度排程備份_'+state.ym+'.json';a.click();
+}
+
+function bind(){
+  $('fMonth').addEventListener('change',function(){state.ym=this.value;loadData();});
+  $('btnSavePay').addEventListener('click',function(){
+    var v=$('fPayday').value;if(!v){alert('請先選日期');return;}
+    var body=[{ym:state.ym,payday:v,updated_at:new Date().toISOString()}];
+    api('schedule_month',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)})
+      .then(function(){state.payday=v;refreshAll();alert('已儲存，發薪日 '+v);})
+      .catch(function(e){alert('儲存失敗');console.error(e);});
+  });
+  $('btnRules').addEventListener('click',function(){renderRules();$('ruleModal').classList.add('on');});
+  $('btnCloseRule').addEventListener('click',function(){$('ruleModal').classList.remove('on');});
+  $('btnAddRule').addEventListener('click',function(){openEdit(null);});
+  $('btnExport').addEventListener('click',exportJSON);
+  $('btnSaveRule').addEventListener('click',saveRule);
+  $('btnCancelEdit').addEventListener('click',function(){$('editModal').classList.remove('on');});
+  $('btnDelRule').addEventListener('click',delRule);
+  $('eType').addEventListener('change',toggleType);
+  $('fCat').addEventListener('change',function(){state.cat=this.value;renderList();});
+  $('fSearch').addEventListener('input',function(){state.search=this.value.trim();renderList();});
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
+    t.addEventListener('click',function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
+      t.classList.add('on');state.filter=t.getAttribute('data-f');renderList();
+    });
+  });
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('[data-toggle],[data-done],[data-edit]');
+    if(!el)return;
+    if(el.hasAttribute('data-toggle')){toggleDone(el.getAttribute('data-toggle'),el.getAttribute('data-rid'),el.getAttribute('data-due'));}
+    else if(el.hasAttribute('data-done')){
+      var k=el.getAttribute('data-done');
+      var t=buildTasks().filter(function(x){return x.key===k;})[0];
+      if(t)toggleDone(k,t.r.id,t.due);
+    }
+    else if(el.hasAttribute('data-edit')){openEdit(+el.getAttribute('data-edit'));}
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.modal'),function(m){
+    m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('on');});
+  });
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var now=new Date();
+  state.today=iso(now);
+  state.ym=now.getFullYear()+'-'+pad(now.getMonth()+1);
+  $('fMonth').value=state.ym;
+  bind();
+  loadData();
+});
+</script>
+</body>
+</html>
